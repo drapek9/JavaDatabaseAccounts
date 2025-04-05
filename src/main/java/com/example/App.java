@@ -6,7 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -20,32 +23,52 @@ public class App {
             ex.printStackTrace();
         }
         String theAction = "";
+
+        User userAccount = null;
+
+        String userResponse = "";
         Scanner sc = new Scanner(System.in, "Cp852");
         do {
-            System.out.println("Chcete se přihlásit (P) nebo si vytvořit účet (V)?: ");
-            theAction = sc.nextLine().replaceAll("[^a-zA-Z]", "");
-        // } while (!(theAction == "P" || theAction == "V"));
-        } while (!(theAction.equals("P") || theAction.equals("V")));
-        if (theAction.equals("V")){
-            boolean result =  createUser(); // true pro nás znamená, bud vytvoren nebo jiz existoval (bylo již vypsáno) ... false je neočekávaná chyba (vypíšeme potom)
-            if (!result){
-                writeError("Nepodařilo se vytvořit účet!!!");
+            if (userAccount == null){
+                do {
+                    System.out.println("Chcete se přihlásit (P) nebo si vytvořit účet (V)?: ");
+                    theAction = sc.nextLine();
+                    // sc.close();
+                } while (!(theAction.equals("P") || theAction.equals("V")));
+                if (theAction.equals("V")){
+                    boolean result =  createUser(); // true pro nás znamená, bud vytvoren nebo jiz existoval (bylo již vypsáno) ... false je neočekávaná chyba (vypíšeme potom)
+                    if (!result){
+                        writeError("Nepodařilo se vytvořit účet!!!");
+                    }
+                } else {
+                    userAccount = signToUser();
+                    if (userAccount == null){
+                        writeError("Účet nebo heslo se neschoduje");
+                    } else {
+                        System.out.println("Byl jsi úspěšně přihlášen");
+                    } 
+                    // else {
+                    //     writeError("Něco se pokazilo");
+                // }
             }
-        } else {
-            Boolean result = signToUser();
-
-            if (result == null){
-                writeError("Účet nebo heslo se neschoduje");
-            } else if (result){
-                System.out.println("Byl jsi úspěšně přihlášen");
+                
             } else {
-                writeError("Něco se pokazilo");
+                userResponse = sc.nextLine();
+                // sc.close();
             }
-        }
-        sc.close();
+
+            // if (userResponse.equals("ls")){
+            //     userAccount.writePermissions();
+            // } else if (userAccount.options.keySet().contains(userResponse)){
+            //     System.out.println("můžem");
+            // } else {
+            //     System.out.println("nemůžeme");
+            // }
+        } while (!userResponse.equals("END"));
+
     }
 
-    public static Boolean signToUser(){
+    public static User signToUser(){
 
         Map<String, String> logIn = new LinkedHashMap<>();
         logIn.put("user_name", null);
@@ -58,31 +81,56 @@ public class App {
             logIn.replace(key, sc.nextLine());
         });
 
-        sc.close();
+        // sc.close();
         Dotenv dotenv = Dotenv.load();
+
+        User finalUser = null;
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", dotenv.get("PASSWORD"))){
-            try (PreparedStatement prepStatemant = connection.prepareStatement("SELECT id, name, user_name, password FROM users WHERE user_name = ? AND password = ?")){
+            try (PreparedStatement prepStatemant = connection.prepareStatement("SELECT id, name, user_name, password, role FROM users WHERE user_name = ? AND password = ?")){
                 prepStatemant.setString(1, logIn.get("user_name"));
                 prepStatemant.setString(2, logIn.get("password"));
+
+                Map<String, String> allInf = new LinkedHashMap<>();
+                // allInf.put("id", null);
+                // allInf.put("name", null);
+                // allInf.put("user_name", null);
+                // allInf.put("password", null);
+                // allInf.put("role", null);
 
                 ResultSet selectResult = prepStatemant.executeQuery();
 
                 System.out.println(selectResult);
 
                 int countResults = 0;
+                // List<String> keysList = new ArrayList<>(allInf.keySet());
                 while (selectResult.next()){
+                    // List 
+                    // allInf.replace(keysList.get(countResults), selectResult.getString(countResults));
+                    allInf.put("id", selectResult.getString(1));
+                    allInf.put("name", selectResult.getString(2));
+                    allInf.put("user_name", selectResult.getString(3));
+                    allInf.put("password", selectResult.getString(4));
+                    allInf.put("role", selectResult.getString(5));
                     countResults ++;
                 }
 
+                System.out.println(allInf);
+
                 if (countResults == 0){
                     return null;
+                } else {
+                    if (allInf.get("role") == "admin"){
+                        finalUser = new Admin(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("username"), allInf.get("password"));
+                    } else {
+                        finalUser = new NormalUser(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("username"), allInf.get("password"));
+                    }
                 }
             }
         } catch (SQLException exc){
-            return false;
+            return null;
         }
 
-        return true;
+        return finalUser;
     }
 
     public static boolean createUser(){
@@ -94,7 +142,7 @@ public class App {
         reqTypeInf.put("password", null);
         Dotenv dotenv = Dotenv.load();
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", dotenv.get("PASSWORD"))){
-            try (PreparedStatement prepStatement = connection.prepareStatement("INSERT INTO users(name, user_name, password) VALUES(?, ?, ?)", PreparedStatement.RETURN_GENERATED_KEYS)){
+            try (PreparedStatement prepStatement = connection.prepareStatement("INSERT INTO users(name, user_name, password, role) VALUES(?, ?, ?, 'normal')", PreparedStatement.RETURN_GENERATED_KEYS)){
 
                 Scanner sc = new Scanner(System.in, "Cp852");
 
@@ -106,16 +154,16 @@ public class App {
                 });
                 sc.close();
 
-                User firstUser = new User().setName(reqTypeInf.get("name")).setUsername(reqTypeInf.get("user_name")).setPassword(reqTypeInf.get("password"));
+                // User firstUser = new User().setName(reqTypeInf.get("name")).setUsername(reqTypeInf.get("user_name")).setPassword(reqTypeInf.get("password"));
                 
-                prepStatement.setString(1, firstUser.getName());
-                prepStatement.setString(2, firstUser.getUsername());
-                prepStatement.setString(3, firstUser.getPassword());
+                prepStatement.setString(1, reqTypeInf.get("name"));
+                prepStatement.setString(2, reqTypeInf.get("user_name"));
+                prepStatement.setString(3, reqTypeInf.get("password"));
 
                 if (prepStatement.executeUpdate() > 0){
                     try (ResultSet ids = prepStatement.getGeneratedKeys()){
                         ids.next();
-                        firstUser.setId(ids.getInt(1));
+                        // firstUser.setId(ids.getInt(1));
                     }
                 } else {
                     return false;
