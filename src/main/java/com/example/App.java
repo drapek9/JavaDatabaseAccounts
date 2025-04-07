@@ -6,10 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -29,6 +26,10 @@ public class App {
         String userResponse = "";
         Scanner sc = new Scanner(System.in, "Cp852");
         do {
+            if (userAccount != null && !userAccount.signedStatus){
+                userAccount = null;
+            }
+
             if (userAccount == null){
                 do {
                     System.out.println("Chcete se přihlásit (P) nebo si vytvořit účet (V)?: ");
@@ -54,6 +55,13 @@ public class App {
                 
             } else {
                 userResponse = sc.nextLine();
+                boolean result = userAccount.callEvent(userResponse);
+                System.out.println(result);
+                if (result){
+                    System.out.println("---ok---");
+                } else {
+                    System.out.println("---nope---");
+                }
                 // sc.close();
             }
 
@@ -91,15 +99,9 @@ public class App {
                 prepStatemant.setString(2, logIn.get("password"));
 
                 Map<String, String> allInf = new LinkedHashMap<>();
-                // allInf.put("id", null);
-                // allInf.put("name", null);
-                // allInf.put("user_name", null);
-                // allInf.put("password", null);
-                // allInf.put("role", null);
 
                 ResultSet selectResult = prepStatemant.executeQuery();
 
-                System.out.println(selectResult);
 
                 int countResults = 0;
                 // List<String> keysList = new ArrayList<>(allInf.keySet());
@@ -114,12 +116,11 @@ public class App {
                     countResults ++;
                 }
 
-                System.out.println(allInf);
 
                 if (countResults == 0){
                     return null;
                 } else {
-                    if (allInf.get("role") == "admin"){
+                    if (allInf.get("role").equals("admin")){
                         finalUser = new Admin(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("username"), allInf.get("password"));
                     } else {
                         finalUser = new NormalUser(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("username"), allInf.get("password"));

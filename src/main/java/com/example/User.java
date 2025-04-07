@@ -1,19 +1,23 @@
 package com.example;
-import java.util.HashMap;
 import java.util.Map;
 
-public class User {
+public class User implements UserImplementation{
     private Integer id;
     private String name;
     private String username;
     private String password;
     private Map<String, String> options;
+    public boolean signedStatus = true;
 
     public User(Integer id, String name, String username, String password){
         this.id = id;
         this.name = name;
         this.username = username;
         this.password = password;
+    };
+
+    public boolean callEvent(String theType){
+        return true;
     };
 
     public String getPassword() {
@@ -47,30 +51,10 @@ public class User {
     }
 
     public void signOut(){
-        System.out.println("User loged out");
+        this.signedStatus = false;
     }
 
     public void deleteOwnAccount(){
         
     }
-
-    // public void setPermissions(){
-    //     if (id == null){
-    //         this.options = new HashMap<>();
-    //         this.options.put("V", "vytvořit");
-    //         this.options.put("P", "Přihlásit");
-    //         this.options.put("L", "List uživatelů");
-    //     } else {
-    //         this.options = new HashMap<>();
-    //         this.options.put("O", "Odhlásit se");
-    //         this.options.put("L", "List uživatelů");
-    //     }
-    // }
-
-    // public void writePermissions(){
-    //     System.out.println("Možnosti akcí");
-    //     this.options.keySet().forEach((oneKey) -> {
-    //         System.out.println(String.format("%s - %s", oneKey, this.options.get(oneKey)));
-    //     });
-    // }
 }
