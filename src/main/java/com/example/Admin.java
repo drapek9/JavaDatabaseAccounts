@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Scanner;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -12,6 +13,12 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class Admin extends User {
     public Admin(Integer id, String name, String username, String password){
         super(id, name, username, password);
+        actions = new HashMap<>();
+        actions.put("DA", this::deleteAnyAccount);
+        actions.put("R", this::changeRole);
+        actions.put("D", this::deleteOwnAccount);
+        actions.put("L", this::getAllUsers);
+        actions.put("A", this::getAllActions);
     }
 
     public void getAllUsers(){
@@ -30,14 +37,8 @@ public class Admin extends User {
     }
     @Override
     public boolean callEvent(String typeFunction){
-        if (typeFunction.equals("DA")){
-            deleteAnyAccount();
-            return true;
-        } else if (typeFunction.equals("R")){
-            changeRole();
-            return true;
-        } else if (typeFunction.equals("D")){
-            deleteOwnAccount();
+        if (this.actions.containsKey(typeFunction)){
+            this.actions.get(typeFunction).run();
             return true;
         }
         return false;
@@ -67,6 +68,27 @@ public class Admin extends User {
     }
 
     private void changeRole(){
+        Scanner sc = new Scanner(System.in, "Cp852");
         
+        System.out.print("Zadejte uživatelské jméno: ");
+        String userName = sc.nextLine();
+        System.out.print("Zadejte novou roli: ");
+        String newRole = sc.nextLine();
+
+        Dotenv theDotenv = Dotenv.load();
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", theDotenv.get("PASSWORD"))){
+            try (PreparedStatement prepStatement = connection.prepareStatement("UPDATE users SET role = ? WHERE user_name = ?")){
+                prepStatement.setString(1, newRole);
+                prepStatement.setString(2, userName);
+
+                if (prepStatement.executeUpdate() > 0){
+                    System.out.println(String.format("Uživateli %s byla úspěšně změněna role na %s", userName, newRole));
+                } else {
+                    System.out.println(String.format("Uživatel %s nebyl nalezen", userName));
+                }
+            }
+        } catch (SQLException esc){
+
+        }
     }
 }
