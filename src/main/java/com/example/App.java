@@ -44,34 +44,24 @@ public class App {
                 } else {
                     userAccount = signToUser();
                     if (userAccount == null){
-                        writeError("Účet nebo heslo se neschoduje");
+                        writeError("Účet nebo heslo se neshoduje");
                     } else {
                         System.out.println("Byl jsi úspěšně přihlášen");
                     } 
-                    // else {
-                    //     writeError("Něco se pokazilo");
-                // }
             }
                 
             } else {
+                System.out.println("---Příkazem 'A' můžete získat seznam možných Akcí---");
                 userResponse = sc.nextLine();
                 boolean result = userAccount.callEvent(userResponse);
-                System.out.println(result);
                 if (result){
-                    System.out.println("---ok---");
+                    System.out.println("---success---");
                 } else {
-                    System.out.println("---nope---");
+                    System.out.println("---mistake---");
                 }
                 // sc.close();
             }
 
-            // if (userResponse.equals("ls")){
-            //     userAccount.writePermissions();
-            // } else if (userAccount.options.keySet().contains(userResponse)){
-            //     System.out.println("můžem");
-            // } else {
-            //     System.out.println("nemůžeme");
-            // }
         } while (!userResponse.equals("END"));
 
     }
@@ -104,10 +94,7 @@ public class App {
 
 
                 int countResults = 0;
-                // List<String> keysList = new ArrayList<>(allInf.keySet());
                 while (selectResult.next()){
-                    // List 
-                    // allInf.replace(keysList.get(countResults), selectResult.getString(countResults));
                     allInf.put("id", selectResult.getString(1));
                     allInf.put("name", selectResult.getString(2));
                     allInf.put("user_name", selectResult.getString(3));
@@ -121,9 +108,9 @@ public class App {
                     return null;
                 } else {
                     if (allInf.get("role").equals("admin")){
-                        finalUser = new Admin(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("username"), allInf.get("password"));
+                        finalUser = new Admin(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("user_name"), allInf.get("password"));
                     } else {
-                        finalUser = new NormalUser(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("username"), allInf.get("password"));
+                        finalUser = new NormalUser(Integer.parseInt(allInf.get("id")), allInf.get("name"), allInf.get("user_name"), allInf.get("password"));
                     }
                 }
             }
@@ -155,7 +142,6 @@ public class App {
                 });
                 sc.close();
 
-                // User firstUser = new User().setName(reqTypeInf.get("name")).setUsername(reqTypeInf.get("user_name")).setPassword(reqTypeInf.get("password"));
                 
                 prepStatement.setString(1, reqTypeInf.get("name"));
                 prepStatement.setString(2, reqTypeInf.get("user_name"));
@@ -164,7 +150,6 @@ public class App {
                 if (prepStatement.executeUpdate() > 0){
                     try (ResultSet ids = prepStatement.getGeneratedKeys()){
                         ids.next();
-                        // firstUser.setId(ids.getInt(1));
                     }
                 } else {
                     return false;

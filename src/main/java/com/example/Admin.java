@@ -12,9 +12,9 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class Admin extends User {
     public Admin(Integer id, String name, String username, String password){
         super(id, name, username, password);
-        this.actions.put("DA", this::deleteAnyAccount);
-        this.actions.put("R", this::changeRole);
-        this.actions.put("L", this::getAllUsers);
+        this.actions.put("DA", new Action("Delete any account (can't delete admin)", this::deleteAnyAccount));
+        this.actions.put("R", new Action("Change someones role (can't change admin's role)", this::changeRole));
+        this.actions.put("L", new Action("Get all usernames", this::getAllUsers));
     }
 
     public void getAllUsers(){
@@ -46,7 +46,7 @@ public class Admin extends User {
                 if (prepStatement.executeUpdate() > 0){
                     System.out.println("Uživatel úspěšně odstraněn");
                 } else {
-                    System.out.println("Nemohli jsme najít ");
+                    System.out.println("Nepodařilo se odstranit žádného uživatele");
                 }
             }
         } catch (SQLException exc){
@@ -65,14 +65,14 @@ public class Admin extends User {
 
         Dotenv theDotenv = Dotenv.load();
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", theDotenv.get("PASSWORD"))){
-            try (PreparedStatement prepStatement = connection.prepareStatement("UPDATE users SET role = ? WHERE user_name = ?")){
+            try (PreparedStatement prepStatement = connection.prepareStatement("UPDATE users SET role = ? WHERE user_name = ? AND role != 'admin'")){
                 prepStatement.setString(1, newRole);
                 prepStatement.setString(2, userName);
 
                 if (prepStatement.executeUpdate() > 0){
-                    System.out.println(String.format("Uživateli %s byla úspěšně změněna role na %s", userName, newRole));
+                    System.out.println(String.format("Uživateli %s byla úspěšně změněna role na %s.", userName, newRole));
                 } else {
-                    System.out.println(String.format("Uživatel %s nebyl nalezen", userName));
+                    System.out.println(String.format("Uživatel %s nebyl nalezen nebo nemohl být odstraněn!", userName));
                 }
             }
         } catch (SQLException esc){
