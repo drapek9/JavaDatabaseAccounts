@@ -5,7 +5,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Scanner;
 
 import io.github.cdimascio.dotenv.Dotenv;
@@ -13,12 +12,9 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class Admin extends User {
     public Admin(Integer id, String name, String username, String password){
         super(id, name, username, password);
-        actions = new HashMap<>();
-        actions.put("DA", this::deleteAnyAccount);
-        actions.put("R", this::changeRole);
-        actions.put("D", this::deleteOwnAccount);
-        actions.put("L", this::getAllUsers);
-        actions.put("A", this::getAllActions);
+        this.actions.put("DA", this::deleteAnyAccount);
+        this.actions.put("R", this::changeRole);
+        this.actions.put("L", this::getAllUsers);
     }
 
     public void getAllUsers(){
@@ -34,14 +30,6 @@ public class Admin extends User {
         } catch (SQLException exc) {
 
         }
-    }
-    @Override
-    public boolean callEvent(String typeFunction){
-        if (this.actions.containsKey(typeFunction)){
-            this.actions.get(typeFunction).run();
-            return true;
-        }
-        return false;
     }
 
     private void deleteAnyAccount (){

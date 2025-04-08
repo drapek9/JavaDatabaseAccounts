@@ -12,6 +12,8 @@ public class User implements UserImplementation{
 
     public User(Integer id, String name, String username, String password){
         this.actions = new HashMap<>();
+        this.actions.put("SO", this::signOut);
+        this.actions.put("A", this::getAllActions);
         this.id = id;
         this.name = name;
         this.username = username;
@@ -25,9 +27,13 @@ public class User implements UserImplementation{
         });
     }
 
-    public boolean callEvent(String theType){
-        return true;
-    };
+    public boolean callEvent(String typeFunction){
+        if (this.actions.containsKey(typeFunction)){
+            this.actions.get(typeFunction).run();
+            return true;
+        }
+        return false;
+    }
 
     public String getPassword() {
         return password;
