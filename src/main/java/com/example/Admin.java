@@ -1,15 +1,12 @@
 package com.example;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
-import io.github.cdimascio.dotenv.Dotenv;
 
-public class Admin extends User {
+public class Admin extends UserImpl {
     public Admin(Integer id, String name, String username, String password){
         super(id, name, username, password);
         this.actions.put("DA", new Action("Delete any account (can't delete admin)", this::deleteAnyAccount));
@@ -18,39 +15,31 @@ public class Admin extends User {
     }
 
     public void getAllUsers(){
-        Dotenv dotenv = Dotenv.load();
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", dotenv.get("PASSWORD"))){
-            try (PreparedStatement prepStatement = connection.prepareStatement("SELECT user_name FROM users")){
-                ResultSet theResult = prepStatement.executeQuery();
-                System.out.println("Všichni uživatelé:");
-                while (theResult.next()) {
-                    System.out.println(theResult.getString(1));
-                }
-            }
-        } catch (SQLException exc) {
+        Map<Integer, Object> myValues = new HashMap<>();
+        Map<Integer, Object> myValuesGet = new HashMap<>();
+        myValuesGet.put(1, "String");
+        myValuesGet.put(2, "Integer");
 
-        }
+        List<List<String>> result =  (List<List<String>>)ConnectDatabase.connectToDatabase("SELECT user_name, id FROM users", myValues, "SELECT", myValuesGet);
+        System.out.println(result);
     }
 
     private void deleteAnyAccount (){
-        // String delUsername = "drapek";
         Scanner sc = new Scanner(System.in, "Cp852");
         System.out.println("Zadejte uživatelské jméno:");
         String delUsername = sc.nextLine();
 
-        Dotenv theDotenv = Dotenv.load();
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", theDotenv.get("PASSWORD"))){
-            try (PreparedStatement prepStatement = connection.prepareStatement("DELETE FROM users WHERE user_name = ? AND role != 'admin'")){
-                prepStatement.setString(1, delUsername);
+        // Dotenv theDotenv = Dotenv.load();
 
-                if (prepStatement.executeUpdate() > 0){
-                    System.out.println("Uživatel úspěšně odstraněn");
-                } else {
-                    System.out.println("Nepodařilo se odstranit žádného uživatele");
-                }
-            }
-        } catch (SQLException exc){
+        Map<Integer, Object> myValues = new HashMap<>();
+        myValues.put(1, delUsername);
+        
+        boolean result =  (boolean)ConnectDatabase.connectToDatabase("DELETE FROM users WHERE user_name = ? AND role != 'admin'", myValues, "DELETE", null);
 
+        if (result){
+            System.out.println("Uživatel úspěšně odstraněn");
+        } else {
+            System.out.println("Nepodařilo se odstranit žádného uživatele");
         }
 
     }
@@ -63,20 +52,17 @@ public class Admin extends User {
         System.out.print("Zadejte novou roli: ");
         String newRole = sc.nextLine();
 
-        Dotenv theDotenv = Dotenv.load();
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", theDotenv.get("PASSWORD"))){
-            try (PreparedStatement prepStatement = connection.prepareStatement("UPDATE users SET role = ? WHERE user_name = ? AND role != 'admin'")){
-                prepStatement.setString(1, newRole);
-                prepStatement.setString(2, userName);
+        Map<Integer, Object> myValues = new HashMap<>();
+        myValues.put(1, newRole);
+        myValues.put(2, userName);
 
-                if (prepStatement.executeUpdate() > 0){
-                    System.out.println(String.format("Uživateli %s byla úspěšně změněna role na %s.", userName, newRole));
-                } else {
-                    System.out.println(String.format("Uživatel %s nebyl nalezen nebo nemohl být odstraněn!", userName));
-                }
-            }
-        } catch (SQLException esc){
+        boolean result = (boolean)ConnectDatabase.connectToDatabase("UPDATE users SET role = ? WHERE user_name = ? AND role != 'admin'", myValues, "UPDATE", null);
 
+        if (result){
+            System.out.println(String.format("Uživateli %s byla úspěšně změněna role na %s.", userName, newRole));
+        } else {
+            System.out.println(String.format("Uživatel %s nebyl nalezen nebo nemohl být odstraněn!", userName));
         }
+
     }
 }

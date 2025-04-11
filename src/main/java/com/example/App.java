@@ -21,7 +21,7 @@ public class App {
         }
         String theAction = "";
 
-        User userAccount = null;
+        UserImpl userAccount = null;
 
         String userResponse = "";
         Scanner sc = new Scanner(System.in, "Cp852");
@@ -66,7 +66,7 @@ public class App {
 
     }
 
-    public static User signToUser(){
+    public static UserImpl signToUser(){
 
         Map<String, String> logIn = new LinkedHashMap<>();
         logIn.put("user_name", null);
@@ -82,7 +82,7 @@ public class App {
         // sc.close();
         Dotenv dotenv = Dotenv.load();
 
-        User finalUser = null;
+        UserImpl finalUser = null;
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", dotenv.get("PASSWORD"))){
             try (PreparedStatement prepStatemant = connection.prepareStatement("SELECT id, name, user_name, password, role FROM users WHERE user_name = ? AND password = ?")){
                 prepStatemant.setString(1, logIn.get("user_name"));
@@ -140,7 +140,6 @@ public class App {
                         reqTypeInf.replace(key, sc.nextLine());
                     } while (reqTypeInf.get(key) == null || reqTypeInf.get(key) == "");
                 });
-                sc.close();
 
                 
                 prepStatement.setString(1, reqTypeInf.get("name"));
