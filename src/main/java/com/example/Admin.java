@@ -20,7 +20,7 @@ public class Admin extends UserImpl {
         myValuesGet.put(1, "String");
         myValuesGet.put(2, "Integer");
 
-        List<List<String>> result =  (List<List<String>>)ConnectDatabase.connectToDatabase("SELECT user_name, id FROM users", myValues, "SELECT", myValuesGet);
+        List<List<Object>> result =  (List<List<Object>>)ConnectDatabase.connectToDatabase("SELECT user_name, id FROM users", myValues, "SELECT", myValuesGet);
         System.out.println(result);
     }
 

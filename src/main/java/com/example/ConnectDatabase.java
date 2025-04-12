@@ -14,7 +14,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 public class ConnectDatabase {
     static Object connectToDatabase (String sqlStatemant, Map<Integer, Object> values, String typeFunction, Map<Integer, Object> valuesGet){
         Dotenv theDotenv = Dotenv.load();
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/app_users", "root", theDotenv.get("PASSWORD"))){
+        try (Connection connection = DriverManager.getConnection(theDotenv.get("CONNECTADRESS"), theDotenv.get("USER"), theDotenv.get("PASSWORD"))){
             try (PreparedStatement prepStatemant = connection.prepareStatement(sqlStatemant)){
                 values.keySet().forEach((oneNumber) -> {
                     try {
@@ -40,7 +40,7 @@ public class ConnectDatabase {
                         return false;
                     }
                 } else {
-                    List<List<String>> allValues = new ArrayList<>();
+                    List<List<Object>> allValues = new ArrayList<>();
                     ResultSet theResult = prepStatemant.executeQuery();
                     while (theResult.next()) {
                         allValues.add(new ArrayList<>());
@@ -50,7 +50,7 @@ public class ConnectDatabase {
                                     allValues.get(allValues.size()-1).add(theResult.getString(key));
                                 } else {
                                     int res = theResult.getInt(key);
-                                    allValues.get(allValues.size()-1).add(String.format("%d", res));
+                                    allValues.get(allValues.size()-1).add(res);
                                 }
                                
                             } catch (SQLException exc){
@@ -62,6 +62,8 @@ public class ConnectDatabase {
                     return allValues;
                 }
 
+            } catch (Exception exc){
+                return false;
             }
         } catch (SQLException exc){
             return null;
